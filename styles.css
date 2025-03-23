@@ -206,6 +206,10 @@ li:last-child {
     padding: 5px 10px;
     border-radius: 4px;
     cursor: pointer;
+    width: auto;
+    min-width: 80px;
+    max-width: 120px;
+    text-align: center;
 }
 
 .delete-btn:hover {
@@ -236,6 +240,13 @@ li:last-child {
     
     .location-buttons {
         flex-direction: column;
+    }
+    
+    .delete-btn {
+        min-width: 70px;
+        max-width: 90px;
+        padding: 6px 8px;
+        font-size: 0.9em;
     }
 }
 
