@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentWeatherDiv = document.getElementById('current-weather');
     const weatherRecommendationsDiv = document.getElementById('weather-recommendations');
     const locationStatusDiv = document.getElementById('location-status');
+    const currentLocationDisplayDiv = document.getElementById('current-location-display');
+    const distanceFromHomeDiv = document.getElementById('distance-from-home');
     const homeLocationForm = document.getElementById('home-location-form');
     const locationInput = document.getElementById('location-input');
     const useCurrentLocationBtn = document.getElementById('use-current-location');
@@ -20,11 +22,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // App State
     let items = JSON.parse(localStorage.getItem('reminder-items')) || [];
     let currentLocation = null;
+    let currentLocationAddress = null;
     let homeLocation = JSON.parse(localStorage.getItem('home-location')) || null;
     let currentWeather = null;
     let weatherCondition = '';
     let temperature = 0;
     let isWatchingLocation = false;
+    let distanceFromHome = 0;
 
     // Initialize
     initialize();
@@ -82,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Display saved home location if exists
         if (homeLocation) {
-            homeLocationDisplay.innerHTML = `<p>Current home location: ${homeLocation.displayName}</p>`;
+            homeLocationDisplay.innerHTML = `<p>Home location: ${homeLocation.displayName}</p>`;
         }
         
         // Request permissions and initialize services
@@ -109,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Geolocation
     function initializeGeolocation() {
         if ('geolocation' in navigator) {
-            locationStatusDiv.innerHTML = '<p>Requesting location access...</p>';
+            locationStatusDiv.innerHTML = '<p>Location: Requesting access...</p>';
             
             navigator.geolocation.getCurrentPosition(
                 position => {
@@ -118,6 +122,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         longitude: position.coords.longitude
                     };
                     locationStatusDiv.innerHTML = `<p>Location: Access granted</p>`;
+                    
+                    // Display current location
+                    updateCurrentLocationDisplay();
+                    
+                    // Fetch weather data for current location
                     fetchWeather(currentLocation.latitude, currentLocation.longitude);
                     
                     // Watch for location changes (when user leaves home)
@@ -127,11 +136,60 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 error => {
                     locationStatusDiv.innerHTML = `<p>Location: ${error.message}</p>`;
+                    currentLocationDisplayDiv.innerHTML = `<p>Current location: Unable to access (${error.message})</p>`;
                     console.error('Geolocation error:', error);
                 }
             );
         } else {
-            locationStatusDiv.innerHTML = '<p>Geolocation is not supported by your browser</p>';
+            locationStatusDiv.innerHTML = '<p>Location: Geolocation not supported by your browser</p>';
+            currentLocationDisplayDiv.innerHTML = '<p>Current location: Geolocation not supported by your browser</p>';
+        }
+    }
+
+    function updateCurrentLocationDisplay() {
+        // Display coordinates initially
+        currentLocationDisplayDiv.innerHTML = `
+            <p>Current location: ${currentLocation.latitude.toFixed(5)}, ${currentLocation.longitude.toFixed(5)}</p>
+        `;
+        
+        // Try to get an address for the current location
+        reverseGeocode(currentLocation.latitude, currentLocation.longitude)
+            .then(result => {
+                if (result) {
+                    currentLocationAddress = result.display_name;
+                    currentLocationDisplayDiv.innerHTML = `
+                        <p>Current location: ${currentLocationAddress}</p>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Reverse geocoding error:', error);
+            })
+            .finally(() => {
+                // If we have a home location set, display distance
+                if (homeLocation) {
+                    updateDistanceFromHome();
+                }
+            });
+    }
+
+    function updateDistanceFromHome() {
+        if (!homeLocation || !currentLocation) return;
+        
+        distanceFromHome = calculateDistance(
+            homeLocation.latitude,
+            homeLocation.longitude,
+            currentLocation.latitude,
+            currentLocation.longitude
+        );
+        
+        // Display distance from home
+        distanceFromHomeDiv.style.display = 'block';
+        
+        if (distanceFromHome < 0.1) {
+            distanceFromHomeDiv.innerHTML = `<p>Distance from home: You are at home (${(distanceFromHome * 1000).toFixed(0)} meters)</p>`;
+        } else {
+            distanceFromHomeDiv.innerHTML = `<p>Distance from home: ${distanceFromHome.toFixed(2)} km</p>`;
         }
     }
 
@@ -143,23 +201,38 @@ document.addEventListener('DOMContentLoaded', () => {
         isWatchingLocation = true;
         
         navigator.geolocation.watchPosition(position => {
-            const newLocation = {
+            // Update current location
+            currentLocation = {
                 latitude: position.coords.latitude,
                 longitude: position.coords.longitude
             };
             
+            // Update the display with new location
+            updateCurrentLocationDisplay();
+            
             // Calculate distance from home
-            const distance = calculateDistance(
+            distanceFromHome = calculateDistance(
                 homeLocation.latitude, 
                 homeLocation.longitude,
-                newLocation.latitude,
-                newLocation.longitude
+                currentLocation.latitude,
+                currentLocation.longitude
             );
             
+            // Update distance display
+            updateDistanceFromHome();
+            
             // If moved significantly from home (100 meters), trigger "leaving home" condition
-            if (distance > 0.1) {
+            if (distanceFromHome > 0.1) {
                 checkAndNotify('leaving-home');
             }
+        }, 
+        error => {
+            console.error('Location watching error:', error);
+        }, 
+        {
+            enableHighAccuracy: true,
+            maximumAge: 30000,
+            timeout: 27000
         });
     }
 
@@ -172,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        homeLocationDisplay.innerHTML = '<p>Searching for location...</p>';
+        homeLocationDisplay.innerHTML = '<p>Home location: Searching...</p>';
         
         try {
             const coordinates = await geocodeLocation(locationName);
@@ -188,7 +261,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('home-location', JSON.stringify(homeLocation));
                 
                 // Update display
-                homeLocationDisplay.innerHTML = `<p>Current home location: ${homeLocation.displayName}</p>`;
+                homeLocationDisplay.innerHTML = `<p>Home location: ${homeLocation.displayName}</p>`;
+                
+                // If we have current location, update distance
+                if (currentLocation) {
+                    updateDistanceFromHome();
+                }
                 
                 // Start watching location if we have permission
                 if (currentLocation) {
@@ -198,10 +276,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Update weather for new location
                 fetchWeather(homeLocation.latitude, homeLocation.longitude);
             } else {
-                homeLocationDisplay.innerHTML = '<p>Could not find that location. Please try again.</p>';
+                homeLocationDisplay.innerHTML = '<p>Home location: Could not find that location. Please try again.</p>';
             }
         } catch (error) {
-            homeLocationDisplay.innerHTML = `<p>Error setting location: ${error.message}</p>`;
+            homeLocationDisplay.innerHTML = `<p>Home location: Error setting location (${error.message})</p>`;
             console.error('Geocoding error:', error);
         }
         
@@ -211,7 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleUseCurrentLocation() {
         if (!currentLocation) {
-            homeLocationDisplay.innerHTML = '<p>Current location not available. Please grant location permission.</p>';
+            homeLocationDisplay.innerHTML = '<p>Home location: Current location not available. Please grant location permission.</p>';
             return;
         }
         
@@ -229,7 +307,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     localStorage.setItem('home-location', JSON.stringify(homeLocation));
                     
                     // Update display
-                    homeLocationDisplay.innerHTML = `<p>Current home location: ${homeLocation.displayName}</p>`;
+                    homeLocationDisplay.innerHTML = `<p>Home location: ${homeLocation.displayName}</p>`;
+                    
+                    // Update distance
+                    updateDistanceFromHome();
                     
                     // Start watching location
                     watchLocation();
@@ -246,7 +327,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
                 
                 localStorage.setItem('home-location', JSON.stringify(homeLocation));
-                homeLocationDisplay.innerHTML = `<p>Current home location: ${homeLocation.displayName}</p>`;
+                homeLocationDisplay.innerHTML = `<p>Home location: ${homeLocation.displayName}</p>`;
+                
+                // Update distance
+                updateDistanceFromHome();
+                
                 watchLocation();
             });
     }

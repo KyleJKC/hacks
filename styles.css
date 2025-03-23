@@ -118,12 +118,40 @@ button:hover {
     background-color: #7f8c8d;
 }
 
-#home-location-display {
-    margin-top: 15px;
+.location-displays {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#home-location-display, #current-location-display, #distance-from-home {
     padding: 10px;
     background-color: #f9f9f9;
     border-radius: 4px;
     font-size: 14px;
+}
+
+#home-location-display {
+    border-left: 4px solid #3498db;
+}
+
+#current-location-display {
+    border-left: 4px solid #27ae60;
+}
+
+#distance-from-home {
+    background-color: #e8f4f8;
+    border-left: 4px solid #9b59b6;
+}
+
+#location-status {
+    margin-bottom: 15px;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    background-color: #f0f9ff;
+    color: #2980b9;
 }
 
 ul {
@@ -155,7 +183,7 @@ li:last-child {
     background-color: #c0392b;
 }
 
-.weather-info, .location-info {
+.weather-info {
     padding: 15px;
     background-color: #f9f9f9;
 }

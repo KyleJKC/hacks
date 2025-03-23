@@ -18,15 +18,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event listeners for switching between login and signup
     signupLink.addEventListener('click', (e) => {
         e.preventDefault();
-        loginSection.style.display = 'none';
-        signupSection.style.display = 'block';
+        window.location.href = 'registration.html'; // Redirect to dedicated registration page
     });
 
-    loginLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        signupSection.style.display = 'none';
-        loginSection.style.display = 'block';
-    });
+    if (loginLink) {
+        loginLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            signupSection.style.display = 'none';
+            loginSection.style.display = 'block';
+        });
+    }
 
     forgotPasswordLink.addEventListener('click', (e) => {
         e.preventDefault();
@@ -57,36 +58,38 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Signup form submission
-    signupForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        
-        const name = document.getElementById('signup-name').value.trim();
-        const email = document.getElementById('signup-email').value.trim();
-        const password = document.getElementById('signup-password').value.trim();
-        const confirmPassword = document.getElementById('signup-confirm-password').value.trim();
-        
-        // Simple validation
-        if (!name || !email || !password || !confirmPassword) {
-            showError(signupForm, 'Please fill in all fields.');
-            return;
-        }
-        
-        if (password !== confirmPassword) {
-            showError(signupForm, 'Passwords do not match.');
-            return;
-        }
-        
-        // Mock signup success - store user info
-        localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('user', JSON.stringify({
-            name: name,
-            email: email
-        }));
-        
-        // Redirect to main app
-        window.location.href = 'index.html';
-    });
+    // Signup form submission (if present in this page)
+    if (signupForm) {
+        signupForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('signup-name').value.trim();
+            const email = document.getElementById('signup-email').value.trim();
+            const password = document.getElementById('signup-password').value.trim();
+            const confirmPassword = document.getElementById('signup-confirm-password').value.trim();
+            
+            // Simple validation
+            if (!name || !email || !password || !confirmPassword) {
+                showError(signupForm, 'Please fill in all fields.');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showError(signupForm, 'Passwords do not match.');
+                return;
+            }
+            
+            // Mock signup success - store user info
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('user', JSON.stringify({
+                name: name,
+                email: email
+            }));
+            
+            // Redirect to main app
+            window.location.href = 'index.html';
+        });
+    }
 
     // Helper function to show error messages
     function showError(form, message) {

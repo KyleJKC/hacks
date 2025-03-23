@@ -13,8 +13,12 @@
             <p>Never forget your essentials again</p>
         </header>
 
-        <section class="home-location">
-            <h2>Set Home Location</h2>
+        <section class="location-section">
+            <h2>Location</h2>
+            <div id="location-status">
+                <p>Location: Waiting for permission...</p>
+            </div>
+            
             <form id="home-location-form">
                 <div class="form-group">
                     <label for="location-input">Enter your home address or city, state:</label>
@@ -24,10 +28,19 @@
                     <button type="submit" class="primary-btn">Save Location</button>
                     <button type="button" id="use-current-location" class="secondary-btn">Use Current Location</button>
                 </div>
-                <div id="home-location-display">
-                    <p>Current home location: Not set</p>
-                </div>
             </form>
+            
+            <div class="location-displays">
+                <div id="home-location-display">
+                    <p>Home location: Not set</p>
+                </div>
+                <div id="current-location-display">
+                    <p>Current location: Waiting for GPS data...</p>
+                </div>
+                <div id="distance-from-home" style="display: none;">
+                    <p>Distance from home: Calculating...</p>
+                </div>
+            </div>
         </section>
 
         <section class="weather-info">
@@ -36,12 +49,6 @@
             </div>
             <div id="weather-recommendations">
                 <!-- Weather-based recommendations will appear here -->
-            </div>
-        </section>
-
-        <section class="location-info">
-            <div id="location-status">
-                <p>Location: Waiting for permission...</p>
             </div>
         </section>
 
