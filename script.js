@@ -1,8 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Check login status first
-    if (!checkLoginStatus()) {
-        return; // Don't initialize the app if not logged in
-    }
+    // Initialize the application
+    initApp();
+    
+    // Check login status
+    checkLoginStatus();
 
     // DOM Elements
     const addItemForm = document.getElementById('add-item-form');
@@ -35,49 +36,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Login check function
     function checkLoginStatus() {
-        const isLoggedIn = localStorage.getItem('isLoggedIn');
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        const loginLink = document.getElementById('login-link');
+        const registrationLink = document.getElementById('registration-link');
+        const userInfo = document.querySelector('.user-info') || document.createElement('div');
         
-        if (isLoggedIn !== 'true') {
-            // Redirect to login page if not logged in
-            window.location.href = 'login.html';
-            return false;
+        if (isLoggedIn) {
+            // Hide login and registration links
+            if (loginLink) loginLink.style.display = 'none';
+            if (registrationLink) registrationLink.style.display = 'none';
+            
+            // Add user info if not already present
+            if (!document.querySelector('.user-info')) {
+                const user = JSON.parse(localStorage.getItem('user')) || {};
+                const userName = user.name || user.email || 'User';
+                
+                userInfo.className = 'user-info';
+                userInfo.innerHTML = `
+                    <p>Welcome, ${userName} <button id="logout-btn" class="logout-btn">Logout</button></p>
+                `;
+                
+                document.querySelector('header').appendChild(userInfo);
+                
+                // Add logout functionality
+                document.getElementById('logout-btn').addEventListener('click', () => {
+                    localStorage.removeItem('isLoggedIn');
+                    window.location.reload();
+                });
+            }
+        } else {
+            // Show login and registration links
+            if (loginLink) loginLink.style.display = 'inline-block';
+            if (registrationLink) registrationLink.style.display = 'inline-block';
+            
+            // Remove user info if present
+            if (document.querySelector('.user-info')) {
+                document.querySelector('.user-info').remove();
+            }
         }
-        
-        // User is logged in, display user info in the header
-        displayUserInfo();
-        return true;
-    }
-
-    function displayUserInfo() {
-        const user = JSON.parse(localStorage.getItem('user')) || {};
-        
-        // Create user info display and logout button if they don't exist
-        if (!document.querySelector('.user-info')) {
-            const header = document.querySelector('header');
-            
-            const userInfoDiv = document.createElement('div');
-            userInfoDiv.className = 'user-info';
-            
-            // Show user's name or email
-            const userName = user.name || user.email || 'User';
-            
-            userInfoDiv.innerHTML = `
-                <p>Welcome, ${userName} <button id="logout-btn" class="logout-btn">Logout</button></p>
-            `;
-            
-            header.appendChild(userInfoDiv);
-            
-            // Add logout button event listener
-            document.getElementById('logout-btn').addEventListener('click', handleLogout);
-        }
-    }
-
-    function handleLogout() {
-        // Clear login status
-        localStorage.removeItem('isLoggedIn');
-        
-        // Redirect to login page
-        window.location.href = 'login.html';
     }
 
     function initialize() {
@@ -601,5 +597,27 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             reminderDiv.remove();
         }, 10000);
+    }
+
+    function initApp() {
+        // Only initialize app features if logged in
+        if (localStorage.getItem('isLoggedIn') !== 'true') {
+            console.log('User not logged in. Limited functionality available.');
+            return;
+        }
+        
+        // DOM Elements
+        const todoList = document.getElementById('todo-list');
+        const todoInput = document.getElementById('todo-input');
+        const addTodoBtn = document.getElementById('add-todo-btn');
+        const weatherDisplay = document.getElementById('weather-display');
+        const homeLocationForm = document.getElementById('home-location-form');
+        const homeLocationInput = document.getElementById('home-location-input');
+        const homeLocationDisplay = document.getElementById('home-location-display');
+        const currentLocationDisplay = document.getElementById('current-location-display');
+        const distanceFromHome = document.getElementById('distance-from-home');
+        const locationStatus = document.getElementById('location-status');
+        
+        // ... rest of the initialization code ...
     }
 }); 

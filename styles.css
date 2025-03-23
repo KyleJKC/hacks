@@ -20,31 +20,60 @@ body {
 header {
     text-align: center;
     margin-bottom: 30px;
-    padding: 20px 0;
-    border-bottom: 1px solid #ddd;
-    position: relative;
+    padding: 20px;
+    background-color: #f0f8ff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 header h1 {
+    margin: 0 0 10px 0;
     color: #2c3e50;
-    margin-bottom: 10px;
+}
+
+nav {
+    margin: 15px 0;
+}
+
+nav a {
+    display: inline-block;
+    margin: 0 10px;
+    color: #3498db;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s;
+}
+
+nav a:hover {
+    color: #1a5276;
+    text-decoration: underline;
 }
 
 .user-info {
-    margin-top: 15px;
-    font-size: 14px;
-    color: #555;
+    margin-top: 10px;
+    font-size: 0.9em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.user-info p {
+    margin: 0;
+    padding: 5px 10px;
+    background-color: #f0f8ff;
+    border-radius: 15px;
+    display: inline-block;
 }
 
 .logout-btn {
     background-color: #e74c3c;
     color: white;
     border: none;
-    font-size: 12px;
     padding: 5px 10px;
     border-radius: 4px;
     cursor: pointer;
     margin-left: 10px;
+    font-size: 0.9em;
     transition: background-color 0.3s;
 }
 
@@ -208,4 +237,32 @@ li:last-child {
     .location-buttons {
         flex-direction: column;
     }
+}
+
+/* Footer Styles */
+footer {
+    text-align: center;
+    padding: 20px;
+    margin-top: 30px;
+    background-color: #f0f8ff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+footer p {
+    margin: 5px 0;
+    color: #555;
+    font-size: 0.9em;
+}
+
+footer a {
+    color: #3498db;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s;
+}
+
+footer a:hover {
+    color: #1a5276;
+    text-decoration: underline;
 } 

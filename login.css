@@ -1,4 +1,4 @@
-.login-section, .signup-section, .register-section {
+.login-section, .signup-section, .register-section, .contact-section {
     max-width: 500px;
     margin: 0 auto;
 }
@@ -23,12 +23,12 @@
     margin: 8px 0;
 }
 
-.login-section h2, .signup-section h2, .register-section h2 {
+.login-section h2, .signup-section h2, .register-section h2, .contact-section h2 {
     text-align: center;
     margin-bottom: 25px;
 }
 
-#login-form, #signup-form, #register-form {
+#login-form, #signup-form, #register-form, #contact-form {
     padding: 10px;
 }
 
@@ -55,15 +55,34 @@
 
 input[type="email"],
 input[type="password"],
-input[type="text"] {
+input[type="text"],
+textarea {
     transition: border-color 0.3s;
 }
 
 input[type="email"]:focus,
 input[type="password"]:focus,
-input[type="text"]:focus {
+input[type="text"]:focus,
+textarea:focus {
     border-color: #3498db;
     outline: none;
+}
+
+textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+    resize: vertical;
+    min-height: 120px;
+    font-family: inherit;
+}
+
+.contact-intro {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #666;
 }
 
 .forgot-password-section {
@@ -76,6 +95,6 @@ input[type="text"]:focus {
     to { opacity: 1; transform: translateY(0); }
 }
 
-.login-section, .signup-section, .register-section {
+.login-section, .signup-section, .register-section, .contact-section {
     animation: fadeIn 0.3s ease-in-out;
 } 

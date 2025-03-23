@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNFORGETTABLE - Contact Us</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="login.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>UNFORGETTABLE</h1>
+            <p>Never forget your essentials again</p>
+        </header>
+
+        <section class="contact-section">
+            <h2>Contact Us</h2>
+            <p class="contact-intro">Having an issue or suggestion? We'd love to hear from you!</p>
+            
+            <form id="contact-form">
+                <div class="form-group">
+                    <label for="email">Your Email:</label>
+                    <input type="email" id="email" required placeholder="Enter your email address">
+                </div>
+                <div class="form-group">
+                    <label for="message">Your Message:</label>
+                    <textarea id="message" rows="6" required placeholder="Please feel free to write anything you would like us to improve on"></textarea>
+                </div>
+                <button type="submit" class="primary-btn">Send Message</button>
+            </form>
+            
+            <div id="contact-result" class="success-message" style="display: none;"></div>
+            
+            <div class="auth-links">
+                <p><a href="index.html">Back to Home</a></p>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <p><a href="contact.html">Contact Us</a></p>
+        <p>Created by Alex Kang, Steve Sun, Kyle Jin</p>
+        <p>Open-sourced under MIT License @ https://github.com/KyleJKC/hacks</p>
+    </footer>
+
+    <script src="contact.js"></script>
+</body>
+</html>
