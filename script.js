@@ -1,4 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Check login status first
+    if (!checkLoginStatus()) {
+        return; // Don't initialize the app if not logged in
+    }
+
     // DOM Elements
     const addItemForm = document.getElementById('add-item-form');
     const itemNameInput = document.getElementById('item-name');
@@ -23,6 +28,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize
     initialize();
+
+    // Login check function
+    function checkLoginStatus() {
+        const isLoggedIn = localStorage.getItem('isLoggedIn');
+        
+        if (isLoggedIn !== 'true') {
+            // Redirect to login page if not logged in
+            window.location.href = 'login.html';
+            return false;
+        }
+        
+        // User is logged in, display user info in the header
+        displayUserInfo();
+        return true;
+    }
+
+    function displayUserInfo() {
+        const user = JSON.parse(localStorage.getItem('user')) || {};
+        
+        // Create user info display and logout button if they don't exist
+        if (!document.querySelector('.user-info')) {
+            const header = document.querySelector('header');
+            
+            const userInfoDiv = document.createElement('div');
+            userInfoDiv.className = 'user-info';
+            
+            // Show user's name or email
+            const userName = user.name || user.email || 'User';
+            
+            userInfoDiv.innerHTML = `
+                <p>Welcome, ${userName} <button id="logout-btn" class="logout-btn">Logout</button></p>
+            `;
+            
+            header.appendChild(userInfoDiv);
+            
+            // Add logout button event listener
+            document.getElementById('logout-btn').addEventListener('click', handleLogout);
+        }
+    }
+
+    function handleLogout() {
+        // Clear login status
+        localStorage.removeItem('isLoggedIn');
+        
+        // Redirect to login page
+        window.location.href = 'login.html';
+    }
 
     function initialize() {
         // Load saved items

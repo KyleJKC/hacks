@@ -22,11 +22,34 @@ header {
     margin-bottom: 30px;
     padding: 20px 0;
     border-bottom: 1px solid #ddd;
+    position: relative;
 }
 
 header h1 {
     color: #2c3e50;
     margin-bottom: 10px;
+}
+
+.user-info {
+    margin-top: 15px;
+    font-size: 14px;
+    color: #555;
+}
+
+.logout-btn {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    font-size: 12px;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 10px;
+    transition: background-color 0.3s;
+}
+
+.logout-btn:hover {
+    background-color: #c0392b;
 }
 
 section {
