@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
             userInfoDiv.className = 'user-info';
             
             userInfoDiv.innerHTML = `
-                <p>Welcome, ${userName} <a href="index.html" class="nav-link">Home</a> <button id="logout-btn" class="logout-btn">Logout</button></p>
+                <p>Welcome, ${userName} <button id="logout-btn" class="logout-btn">Logout</button></p>
             `;
             
             header.appendChild(userInfoDiv);
