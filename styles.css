@@ -75,6 +75,34 @@ button:hover {
     background-color: #2980b9;
 }
 
+.location-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.primary-btn {
+    background-color: #3498db;
+    flex: 1;
+}
+
+.secondary-btn {
+    background-color: #95a5a6;
+    flex: 1;
+}
+
+.secondary-btn:hover {
+    background-color: #7f8c8d;
+}
+
+#home-location-display {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
 ul {
     list-style-type: none;
 }
@@ -124,5 +152,9 @@ li:last-child {
     
     button {
         width: 100%;
+    }
+    
+    .location-buttons {
+        flex-direction: column;
     }
 } 

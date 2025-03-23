@@ -7,13 +7,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentWeatherDiv = document.getElementById('current-weather');
     const weatherRecommendationsDiv = document.getElementById('weather-recommendations');
     const locationStatusDiv = document.getElementById('location-status');
+    const homeLocationForm = document.getElementById('home-location-form');
+    const locationInput = document.getElementById('location-input');
+    const useCurrentLocationBtn = document.getElementById('use-current-location');
+    const homeLocationDisplay = document.getElementById('home-location-display');
 
     // App State
     let items = JSON.parse(localStorage.getItem('reminder-items')) || [];
     let currentLocation = null;
+    let homeLocation = JSON.parse(localStorage.getItem('home-location')) || null;
     let currentWeather = null;
     let weatherCondition = '';
     let temperature = 0;
+    let isWatchingLocation = false;
 
     // Initialize
     initialize();
@@ -22,12 +28,19 @@ document.addEventListener('DOMContentLoaded', () => {
         // Load saved items
         renderItems();
         
+        // Display saved home location if exists
+        if (homeLocation) {
+            homeLocationDisplay.innerHTML = `<p>Current home location: ${homeLocation.displayName}</p>`;
+        }
+        
         // Request permissions and initialize services
         requestNotificationPermission();
         initializeGeolocation();
         
         // Set up event listeners
         addItemForm.addEventListener('submit', handleAddItem);
+        homeLocationForm.addEventListener('submit', handleSetHomeLocation);
+        useCurrentLocationBtn.addEventListener('click', handleUseCurrentLocation);
     }
 
     // Notification Permission
@@ -56,7 +69,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     fetchWeather(currentLocation.latitude, currentLocation.longitude);
                     
                     // Watch for location changes (when user leaves home)
-                    watchLocation();
+                    if (homeLocation) {
+                        watchLocation();
+                    }
                 },
                 error => {
                     locationStatusDiv.innerHTML = `<p>Location: ${error.message}</p>`;
@@ -69,8 +84,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function watchLocation() {
-        // Store home location initially
-        const homeLocation = {...currentLocation};
+        if (isWatchingLocation) {
+            return; // Already watching
+        }
+        
+        isWatchingLocation = true;
         
         navigator.geolocation.watchPosition(position => {
             const newLocation = {
@@ -93,6 +111,140 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Home Location Handling
+    async function handleSetHomeLocation(e) {
+        e.preventDefault();
+        
+        const locationName = locationInput.value.trim();
+        if (!locationName) {
+            return;
+        }
+        
+        homeLocationDisplay.innerHTML = '<p>Searching for location...</p>';
+        
+        try {
+            const coordinates = await geocodeLocation(locationName);
+            
+            if (coordinates) {
+                homeLocation = {
+                    latitude: coordinates.lat,
+                    longitude: coordinates.lon,
+                    displayName: coordinates.display_name
+                };
+                
+                // Save to localStorage
+                localStorage.setItem('home-location', JSON.stringify(homeLocation));
+                
+                // Update display
+                homeLocationDisplay.innerHTML = `<p>Current home location: ${homeLocation.displayName}</p>`;
+                
+                // Start watching location if we have permission
+                if (currentLocation) {
+                    watchLocation();
+                }
+                
+                // Update weather for new location
+                fetchWeather(homeLocation.latitude, homeLocation.longitude);
+            } else {
+                homeLocationDisplay.innerHTML = '<p>Could not find that location. Please try again.</p>';
+            }
+        } catch (error) {
+            homeLocationDisplay.innerHTML = `<p>Error setting location: ${error.message}</p>`;
+            console.error('Geocoding error:', error);
+        }
+        
+        // Reset form
+        locationInput.value = '';
+    }
+
+    function handleUseCurrentLocation() {
+        if (!currentLocation) {
+            homeLocationDisplay.innerHTML = '<p>Current location not available. Please grant location permission.</p>';
+            return;
+        }
+        
+        // Fetch address from coordinates (reverse geocoding)
+        reverseGeocode(currentLocation.latitude, currentLocation.longitude)
+            .then(result => {
+                if (result) {
+                    homeLocation = {
+                        latitude: currentLocation.latitude,
+                        longitude: currentLocation.longitude,
+                        displayName: result.display_name
+                    };
+                    
+                    // Save to localStorage
+                    localStorage.setItem('home-location', JSON.stringify(homeLocation));
+                    
+                    // Update display
+                    homeLocationDisplay.innerHTML = `<p>Current home location: ${homeLocation.displayName}</p>`;
+                    
+                    // Start watching location
+                    watchLocation();
+                }
+            })
+            .catch(error => {
+                console.error('Reverse geocoding error:', error);
+                
+                // Fallback to coordinates only
+                homeLocation = {
+                    latitude: currentLocation.latitude,
+                    longitude: currentLocation.longitude,
+                    displayName: `Latitude: ${currentLocation.latitude.toFixed(4)}, Longitude: ${currentLocation.longitude.toFixed(4)}`
+                };
+                
+                localStorage.setItem('home-location', JSON.stringify(homeLocation));
+                homeLocationDisplay.innerHTML = `<p>Current home location: ${homeLocation.displayName}</p>`;
+                watchLocation();
+            });
+    }
+
+    // Geocoding (Location name to coordinates)
+    async function geocodeLocation(locationName) {
+        // Ensure the location is in the US by appending "USA" if not already specified
+        if (!locationName.toLowerCase().includes('usa') && !locationName.toLowerCase().includes('united states')) {
+            locationName += ', USA';
+        }
+        
+        // Using OpenStreetMap Nominatim API for geocoding (free and doesn't require API key)
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationName)}&limit=1&countrycodes=us`);
+        
+        if (!response.ok) {
+            throw new Error('Geocoding service unavailable');
+        }
+        
+        const data = await response.json();
+        
+        if (data && data.length > 0) {
+            return {
+                lat: parseFloat(data[0].lat),
+                lon: parseFloat(data[0].lon),
+                display_name: data[0].display_name
+            };
+        }
+        
+        return null;
+    }
+    
+    // Reverse Geocoding (Coordinates to address)
+    async function reverseGeocode(latitude, longitude) {
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`);
+        
+        if (!response.ok) {
+            throw new Error('Reverse geocoding service unavailable');
+        }
+        
+        const data = await response.json();
+        
+        if (data && data.display_name) {
+            return {
+                display_name: data.display_name
+            };
+        }
+        
+        return null;
+    }
+
     // Calculate distance between two coordinates in kilometers
     function calculateDistance(lat1, lon1, lat2, lon2) {
         const R = 6371; // Earth's radius in km
@@ -109,8 +261,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Weather API
     async function fetchWeather(latitude, longitude) {
         try {
-            // Using OpenWeatherMap API - you'll need to replace 'YOUR_API_KEY' with a real API key
-            const apiKey = 'YOUR_API_KEY'; // Replace with your OpenWeatherMap API key
+            // Using OpenWeatherMap API
+            const apiKey = 'bf8a7ecd35def02b02f94cedb999a898'; // Replace with your OpenWeatherMap API key
             const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&appid=${apiKey}`);
             
             if (!response.ok) {

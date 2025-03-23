@@ -13,6 +13,23 @@
             <p>Never forget your essentials again</p>
         </header>
 
+        <section class="home-location">
+            <h2>Set Home Location</h2>
+            <form id="home-location-form">
+                <div class="form-group">
+                    <label for="location-input">Enter your home address or city, state:</label>
+                    <input type="text" id="location-input" placeholder="e.g. New York, NY" required>
+                </div>
+                <div class="location-buttons">
+                    <button type="submit" class="primary-btn">Save Location</button>
+                    <button type="button" id="use-current-location" class="secondary-btn">Use Current Location</button>
+                </div>
+                <div id="home-location-display">
+                    <p>Current home location: Not set</p>
+                </div>
+            </form>
+        </section>
+
         <section class="weather-info">
             <div id="current-weather">
                 <p>Loading weather data...</p>
