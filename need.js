@@ -104,14 +104,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Function to get location name from coordinates (using a mock for now)
+    // Function to get location name from coordinates (using real API)
     function getLocationNameFromCoords(latitude, longitude) {
-        // In a real app, this would use a geocoding API
-        // For now, just returning a mock promise with a delay
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                resolve("San Francisco, CA");
-            }, 1000);
+        return new Promise((resolve, reject) => {
+            // Using OpenStreetMap's Nominatim API (free, no API key required)
+            const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`;
+            
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch location data');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.display_name) {
+                        // Format the display name to be more concise
+                        const addressParts = data.display_name.split(',');
+                        const shortenedAddress = addressParts.slice(0, 3).join(',');
+                        resolve(shortenedAddress);
+                    } else {
+                        resolve(`${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching address:', error);
+                    // Fallback to coordinates if API fails
+                    resolve(`${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
+                });
         });
     }
     
@@ -131,85 +151,99 @@ document.addEventListener('DOMContentLoaded', () => {
         loadingSection.style.display = 'block';
         recommendationsContainer.style.display = 'none';
         
-        // Simulate API call delay
-        setTimeout(() => {
-            // Update destination name
-            destinationName.textContent = destination;
-            
-            // Generate mock weather data
-            const weatherData = getMockWeatherData(destination);
-            
-            // Update weather info
-            updateWeatherInfo(weatherData);
-            
-            // Generate recommendations based on weather and duration
-            const recommendations = getRecommendations(weatherData, duration);
-            
-            // Display recommendations
-            displayRecommendations(recommendations);
-            
-            // Hide loading and show recommendations
-            loadingSection.style.display = 'none';
-            recommendationsContainer.style.display = 'block';
-        }, 2000);
+        // First get the coordinates for the destination
+        getCoordinatesForCity(destination)
+            .then(coords => {
+                if (!coords) {
+                    throw new Error('Could not find coordinates for this destination');
+                }
+                
+                // Update destination name
+                destinationName.textContent = destination;
+                
+                // Get real weather data for the destination
+                return getWeatherData(coords.latitude, coords.longitude);
+            })
+            .then(weatherData => {
+                // Update weather info
+                updateWeatherInfo(weatherData);
+                
+                // Generate recommendations based on weather and duration
+                const recommendations = getRecommendations(weatherData, duration);
+                
+                // Display recommendations
+                displayRecommendations(recommendations);
+                
+                // Hide loading and show recommendations
+                loadingSection.style.display = 'none';
+                recommendationsContainer.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                loadingSection.innerHTML = `<p>Error: ${error.message}. Please try again.</p>`;
+                // If there's an error, get mock weather data as fallback
+                const mockWeatherData = getMockWeatherData(destination);
+                updateWeatherInfo(mockWeatherData);
+                
+                // Generate recommendations based on mock weather and duration
+                const recommendations = getRecommendations(mockWeatherData, duration);
+                
+                // Display recommendations
+                displayRecommendations(recommendations);
+                
+                // Show recommendations
+                recommendationsContainer.style.display = 'block';
+            });
     }
     
-    // Function to get mock weather data
-    function getMockWeatherData(destination) {
-        // This would be replaced with an actual API call in a production app
-        const weatherOptions = [
-            { 
-                condition: 'sunny', 
-                temperature: 75, 
-                description: 'Sunny with clear skies',
-                high: 80,
-                low: 65,
-                humidity: '45%',
-                wind: '5 mph'
-            },
-            { 
-                condition: 'rainy', 
-                temperature: 55, 
-                description: 'Light rain throughout the day',
-                high: 60,
-                low: 50,
-                humidity: '85%',
-                wind: '10 mph'
-            },
-            { 
-                condition: 'cloudy', 
-                temperature: 65, 
-                description: 'Partly cloudy with occasional sun',
-                high: 70,
-                low: 60,
-                humidity: '60%',
-                wind: '8 mph'
-            },
-            { 
-                condition: 'snowy', 
-                temperature: 30, 
-                description: 'Light snow throughout the day',
-                high: 35,
-                low: 25,
-                humidity: '80%',
-                wind: '12 mph'
-            },
-            { 
-                condition: 'hot', 
-                temperature: 90, 
-                description: 'Hot and humid',
-                high: 95,
-                low: 75,
-                humidity: '70%',
-                wind: '3 mph'
-            }
-        ];
+    // Function to get coordinates for a city name
+    function getCoordinatesForCity(cityName) {
+        // Use OpenStreetMap Nominatim API for geocoding
+        const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityName)}&limit=1`;
         
-        // Use destination string to deterministically select weather
-        const destinationHash = destination.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        const weatherIndex = destinationHash % weatherOptions.length;
+        return fetch(geocodeUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Geocoding failed');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data && data.length > 0) {
+                    return {
+                        latitude: parseFloat(data[0].lat),
+                        longitude: parseFloat(data[0].lon)
+                    };
+                }
+                return null;
+            });
+    }
+    
+    // Function to get real weather data
+    function getWeatherData(latitude, longitude) {
+        // Use OpenWeatherMap API for real weather data
+        const weatherApiKey = 'bf8a7ecd35def02b02f94cedb999a898'; // OpenWeatherMap free API key
+        const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=imperial&appid=${weatherApiKey}`;
         
-        return weatherOptions[weatherIndex];
+        return fetch(weatherUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Weather API request failed');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Convert API response to our format
+                return {
+                    condition: data.weather[0].main.toLowerCase(),
+                    temperature: Math.round(data.main.temp),
+                    description: data.weather[0].description,
+                    high: Math.round(data.main.temp_max),
+                    low: Math.round(data.main.temp_min),
+                    humidity: `${data.main.humidity}%`,
+                    wind: `${Math.round(data.wind.speed)} mph`
+                };
+            });
     }
     
     // Function to update weather info display
@@ -381,5 +415,63 @@ document.addEventListener('DOMContentLoaded', () => {
             
             recommendationsList.appendChild(recommendationItem);
         });
+    }
+    
+    // Fallback function to get mock weather data
+    function getMockWeatherData(destination) {
+        // This would be used as a fallback if the API call fails
+        const weatherOptions = [
+            { 
+                condition: 'sunny', 
+                temperature: 75, 
+                description: 'Sunny with clear skies',
+                high: 80,
+                low: 65,
+                humidity: '45%',
+                wind: '5 mph'
+            },
+            { 
+                condition: 'rainy', 
+                temperature: 55, 
+                description: 'Light rain throughout the day',
+                high: 60,
+                low: 50,
+                humidity: '85%',
+                wind: '10 mph'
+            },
+            { 
+                condition: 'cloudy', 
+                temperature: 65, 
+                description: 'Partly cloudy with occasional sun',
+                high: 70,
+                low: 60,
+                humidity: '60%',
+                wind: '8 mph'
+            },
+            { 
+                condition: 'snowy', 
+                temperature: 30, 
+                description: 'Light snow throughout the day',
+                high: 35,
+                low: 25,
+                humidity: '80%',
+                wind: '12 mph'
+            },
+            { 
+                condition: 'hot', 
+                temperature: 90, 
+                description: 'Hot and humid',
+                high: 95,
+                low: 75,
+                humidity: '70%',
+                wind: '3 mph'
+            }
+        ];
+        
+        // Use destination string to deterministically select weather
+        const destinationHash = destination.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        const weatherIndex = destinationHash % weatherOptions.length;
+        
+        return weatherOptions[weatherIndex];
     }
 }); 
